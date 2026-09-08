@@ -7,6 +7,7 @@ description: >-
 # Kotlin: язык и проектирование API
 
 ## Порядок работы
+
 1. Изучи изменяемый API, его callers и версии Kotlin/JVM в build files. Сохраняй conventions и публичные контракты проекта.
 2. Выбери только относящиеся к задаче правила ниже; не перерабатывай соседний код ради идиоматичности.
 3. При изменении проверь компиляцию и затронутое поведение существующими проверками проекта. Добавляй тесты там, где они доказывают значимый контракт или предотвращают регрессию.
@@ -95,6 +96,8 @@ description: >-
 Используй `async` только для реального параллельного выполнения, а не как универсальную обёртку обычных вызовов.
 
 ## Java/Spring interoperability
+
+Используй минимальную практичную visibility. Kotlin `internal` относится к compiler module, а не package.
 
 Учитывай final-классы Kotlin, Java nullability annotations, annotation use-site targets, reflection, proxying и no-arg requirements библиотек.
 
