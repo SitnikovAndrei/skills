@@ -1,0 +1,121 @@
+# Правила разработки Kotlin/Spring Backend
+
+Эти соглашения применяются к разработке, ревью, рефакторингу и проектированию Kotlin/Spring backend в репозитории. Явные требования задачи и существующие контракты учитывай прежде общих предпочтений ниже. Не меняй архитектуру существующего проекта только ради соответствия этому шаблону.
+
+## Приоритеты
+Оптимизируй в таком порядке: **корректность → простота → читаемость → сопровождаемость → ясные архитектурные границы → тестируемость → производительность там, где она действительно важна**.
+
+Используй принципы и паттерны только для решения конкретной проблемы. SOLID, KISS, DRY, YAGNI, DDD, Hexagonal Architecture и CQRS — инструменты, а не обязательные требования. Не добавляй layers, interfaces, DTO, mappers, ports, adapters, handlers, factories или wrappers без конкретной пользы.
+
+## Сначала изучи существующий код
+Перед изменением изучи соседнюю реализацию, границы модулей, naming, error handling, tests и существующие abstractions. Сохраняй разумный локальный стиль. Не переделывай unrelated code в рамках небольшой задачи.
+
+Если архитектурное изменение шире задачи, отдели его от functional change и объясни необходимость.
+
+## Структура по business capability
+Предпочитай package-by-feature / screaming architecture. Верхний уровень должен показывать назначение системы: `order/`, `payment/`, `customer/`, `notification/`, а не быть глобальным набором `controllers/services/repositories/entities`.
+
+Код, меняющийся вместе, держи рядом. По умолчанию предпочитай modular monolith; отдельные services оправданы independent deployment, ownership, scaling или failure isolation.
+
+## Границы модулей
+Business module должен иметь одну coherent business responsibility, небольшой намеренный public API, скрытые implementation details и явные зависимости на API других modules.
+
+Не обращайся напрямую к `internal`/`infrastructure`, repository implementations или persistence entities другого модуля. Используй module API, application services или domain/application events.
+
+Kotlin `internal` — граница compiler/Gradle module, а не feature package. Если несколько business modules живут в одном Gradle module, контролируй границы architecture tests (Spring Modulith, Konsist, ArchUnit), package conventions или отдельными Gradle modules при необходимости compile-time isolation.
+
+Стремись к локальности изменений: feature change обычно должен затрагивать свой module, а не множество глобальных technical packages.
+
+## Архитектура пропорциональна сложности
+Для простого CRUD достаточно `Controller -> Service -> Repository`. При существенной domain logic, нескольких external systems, нетривиальных invariants или независимой эволюции вводи application/domain/infrastructure boundaries и ports там, где они дают полезное разделение.
+
+Не навязывай full Hexagonal Architecture trivial modules и не позволяй растущим modules превращаться в god services.
+
+## Responsibility и cohesion
+У класса должна быть одна coherent responsibility, но не обязательно один метод/действие. Use-case service может валидировать, создавать, сохранять и инициировать связанные операции, если это один сценарий.
+
+Разделяй код, если часть имеет independent reason to change, самостоятельный business meaning/dependencies, meaningful reuse или сложность, скрывающую основную ответственность.
+
+Не дели ради line-count. Жёстких лимитов размера класса/метода нет; размер и число dependencies — сигналы, а не правила. Предпочитай high cohesion.
+
+## Naming
+Используй business language и intention-revealing names. Classes — nouns/roles (`OrderService`, `PriceCalculator`, `PaymentGateway`); commands — verbs (`createOrder`); queries отражают результат (`findOrder`, `pendingOrders`); booleans — `is/has/can/should`; collections называют содержимое (`activeUsers`).
+
+Один concept — один термин. Не чередуй `load/fetch/retrieve/get/find`, если смысл одинаков.
+
+`Service` допустим для coherent application/domain service, но при наличии точной роли предпочитай `PriceCalculator`, `CancellationPolicy`, `PaymentGateway`. Не переименовывай ясный `OrderService` только ради отказа от слова Service.
+
+Избегай расплывчатых `Utils`, `Helpers`, `Common`, `Misc`, `Manager`, `Processor`, `Data`, `Info`, если они не описывают реальную abstraction. Не создавай junk-drawer packages; размещай код рядом с capability/infrastructure concern, которому он служит.
+
+## Dependencies и abstractions
+Предпочитай constructor injection и явные dependencies.
+
+Не создавай автоматически `FooService` + `FooServiceImpl`. Interface нужен для реальной boundary, module API, port, нескольких implementations или meaningful variation.
+
+Pass-through layer без policy, boundary, translation, orchestration или isolation обычно лишний.
+
+Делай side effects явными. Отделяй business decisions/calculations от HTTP, DB, broker, filesystem, clock, randomness и external APIs, когда это улучшает ясность и тестируемость.
+
+## Domain behavior
+Держи business invariants рядом с владеющим domain concept. Если cancellation — реальная domain operation, `order.cancel()` лучше внешней мутации нескольких полей.
+
+Не переноси persistence/HTTP/orchestration в domain entities только ради «rich domain model». Tell, Don't Ask и Law of Demeter применяй прагматично; не создавай бессмысленные forwarding methods ради сокрытия нормального DTO/property access.
+
+## Commands и queries
+Предпочитай CQS: query не должен неожиданно менять state; command может возвращать естественный результат — ID или обновлённое состояние. Не применяй CQS догматично, если API становится хуже.
+
+## Errors
+Не проглатывай failures. Преобразуй ошибки на границах: `domain/application error -> transport/integration mapping -> HTTP/MQ/external representation`.
+
+Не помещай HTTP status concepts в domain. Не используй exceptions для обычного expected branching, если domain result выражает его яснее.
+
+## Duplication и abstraction
+Не абстрагируй только по визуальному сходству. Rule of Three — лишь heuristic против premature abstraction. Выделяй раньше, если stable domain concept/invariant/architectural boundary уже очевиден; не копируй известный business invariant ради третьего повторения.
+
+Небольшое duplication лучше, чем coupling несвязанных concepts через ложную abstraction.
+
+## Concurrency и integrity
+При `read -> decision -> write` над shared state учитывай concurrent execution. Application pre-check не гарантирует integrity.
+
+Выбирай механизм по требованию: DB constraints, atomic operations, optimistic/pessimistic locking, versioning, idempotency keys, transaction isolation. Не добавляй locking/retries вслепую.
+
+## Compatibility contracts
+Externally consumed HTTP APIs, events/messages, DB schemas и persisted formats — compatibility contracts.
+
+Перед изменением учитывай существующих clients/consumers, required/optional fields, enum expansion, defaults, rolling deployments и backward-compatible migration. Предпочитай additive evolution. External consumers должны по возможности переносить unknown fields/future values, если protocol это допускает. Это не отменяет exhaustive handling закрытых внутренних domain hierarchies. Не делай cleanup-renames, незаметно ломающие consumers.
+
+## Generated code
+Не редактируй generated sources вручную, если repository явно не считает их editable. Меняй schema/template/generator configuration/source definition. Примеры: OpenAPI clients/models, protobuf/gRPC, jOOQ, annotation-processor output.
+
+## Tests
+Тестируй observable behavior и важные invariants, а не private implementation details. Используй минимально достаточный test slice, но не заменяй integration tests mocks, если correctness зависит от framework/DB. Для persistence при необходимости проверяй реальный SQL/query count/fetch behavior.
+
+## Automated checks
+Предпочитай executable rules review-only conventions: Kotlin compiler warnings, ktlint, detekt, tests, Konsist/ArchUnit, Spring Modulith verification. Не трать review на formatting, который можно автоматизировать.
+
+## Правило рефакторинга
+Перед созданием нового class/interface/port/adapter/DTO/mapper/facade/factory/handler ответь:
+1. Какой responsibility он владеет?
+2. Почему она не принадлежит существующему component?
+3. Может ли она эволюционировать независимо?
+4. Создаёт ли полезную boundary или уменьшает coupling?
+5. Снижает ли cognitive complexity для следующего разработчика?
+
+Если ответы неясны — предпочитай более простой design.
+
+## Профильные skills
+Если установлены, выбирай по изменяемому поведению, а не только по расширению файла:
+- `$kotlin-backend-architecture` — границы модулей, ports/events, CQRS.
+- `$kotlin-language-design` — Kotlin types/nullability, equality, collections, coroutines.
+- `$kotlin-spring-backend` — Spring HTTP/validation, DI, proxies/transactions, config/events.
+- `$kotlin-backend-persistence` — ORM/SQL, constraints, fetch plans, locking, migrations.
+- `$kotlin-spring-testing` — проектирование и диагностика специальных backend tests.
+- `$kotlin-spring-security-review` — security review или изменяемая граница доверия.
+- `$kotlin-backend-code-review-refactoring` — ревью или запрошенный рефакторинг.
+
+Не загружай весь набор автоматически. Если нужный skill не установлен, следуй правилам проекта и доступной документации; отсутствие skill само по себе не блокирует задачу.
+
+## Финальный критерий дизайна
+Разработчик должен быстро ответить: где business capability; каков его public API; где business rules; где происходит I/O; какие modules от него зависят; что менять для нового requirement.
+
+Если один use case требует проходить множество бессмысленных wrappers — design over-fragmented. Если один class/package знает почти обо всей системе — design under-structured.
