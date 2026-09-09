@@ -34,6 +34,14 @@ Repository implementations, persistence entities, provider DTOs, configuration d
 
 Kotlin `internal` ограничивает compiler module, а не feature package. Если нужна compile-time isolation — рассмотри отдельные Gradle modules. Для логической изоляции используй Spring Modulith, Konsist, ArchUnit или аналогичные structural tests.
 
+## Полезность интерфейса
+
+Оценивай, сколько знаний требуется caller: не только методы и параметры, но и порядок вызовов, invariants, ошибки и настройки. Полезная граница скрывает существенную сложность и удерживает изменения локально; короткая сигнатура сама по себе этого не гарантирует.
+
+Мысленно удали абстракцию, сохранив поведение. Если исчезают только переходы между обёртками, рассмотри её упрощение. Если правила, преобразования или координация разойдутся по callers, абстракция выполняет полезную работу. Сначала проверь скрытые контракты, включая transactions, authorization и lifecycle.
+
+Это диагностический приём, а не команда удалять слой. Единственная реализация может оправдывать port, если он защищает реальную границу или направление зависимостей. Сохраняй принятую терминологию проекта.
+
 ## Hexagonal boundaries
 
 Используй ports там, где application/domain не должен зависеть от изменчивого внешнего механизма. Типичные outbound ports: payment provider, CRM/external API, message publisher, repository при необходимости изоляции persistence, `Clock` для бизнес-значимого времени. Типичные inbound adapters: HTTP controllers, message consumers, scheduled jobs, CLI/admin entry points.

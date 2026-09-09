@@ -1,0 +1,31 @@
+[[skills.config]]
+path = '..\.agents\skills\kotlin-backend-architecture\SKILL.md'
+enabled = false
+
+[[skills.config]]
+path = '..\.agents\skills\kotlin-language-design\SKILL.md'
+enabled = false
+
+[[skills.config]]
+path = '..\.agents\skills\kotlin-spring-backend\SKILL.md'
+enabled = false
+
+[[skills.config]]
+path = '..\.agents\skills\kotlin-backend-persistence\SKILL.md'
+enabled = false
+
+[[skills.config]]
+path = '..\.agents\skills\kotlin-spring-testing\SKILL.md'
+enabled = false
+
+[[skills.config]]
+path = '..\.agents\skills\kotlin-spring-security-review\SKILL.md'
+enabled = false
+
+[[skills.config]]
+path = '..\.agents\skills\kotlin-spring-debugging\SKILL.md'
+enabled = false
+
+[[skills.config]]
+path = '...\.agents\skills\kotlin-backend-code-review-refactoring\SKILL.md'
+enabled = false

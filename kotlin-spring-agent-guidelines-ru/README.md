@@ -1,6 +1,6 @@
 # Kotlin/Spring Agent Guidelines
 
-Семь самостоятельных Agent Skills для разработки и ревью Kotlin/Spring backend и необязательный шаблон [AGENTS.md](AGENTS.md) с общими соглашениями проекта.
+Восемь самостоятельных Agent Skills для разработки и ревью Kotlin/Spring backend и необязательный шаблон [AGENTS.md](AGENTS.md) с общими соглашениями проекта.
 
 ## Состав
 
@@ -13,6 +13,7 @@
 | [kotlin-spring-testing](skills/kotlin-spring-testing/SKILL.md) | Выбор и диагностика unit/slice/integration/contract tests |
 | [kotlin-spring-security-review](skills/kotlin-spring-security-review/SKILL.md) | Authentication, authorization и границы доверия |
 | [kotlin-backend-code-review-refactoring](skills/kotlin-backend-code-review-refactoring/SKILL.md) | Ревью diff/кода и запрошенный рефакторинг |
+| [kotlin-spring-debugging](skills/kotlin-spring-debugging/SKILL.md) | Диагностика багов, проверка причин и измерение performance regressions |
 
 ## Установка
 
@@ -64,3 +65,13 @@ your-project/
 - [OpenAI: Build skills](https://learn.chatgpt.com/docs/build-skills)
 
 Русский язык инструкций не меняет требования к YAML и именам каталогов. `scripts/`, `references/`, `assets/` и `agents/openai.yaml` необязательны.
+
+## Заимствованные подходы
+
+Из [mattpocock/skills](https://github.com/mattpocock/skills) адаптированы идеи:
+
+- [diagnosing-bugs](https://github.com/mattpocock/skills/blob/main/skills/engineering/diagnosing-bugs/SKILL.md): проверяемый сигнал ошибки, проверка причин и повтор исходного сценария после исправления.
+- [code-review](https://github.com/mattpocock/skills/blob/main/skills/engineering/code-review/SKILL.md): отдельное внимание требованиям задачи и правилам/корректности кода.
+- [codebase-design](https://github.com/mattpocock/skills/blob/main/skills/engineering/codebase-design/SKILL.md): оценка сложности интерфейса для callers и мысленное удаление абстракции как проверка её пользы.
+
+Инструкции написаны для этого набора. Диагностика допускает обоснованный анализ без runtime-воспроизведения; ревью не требует отдельного tracker или spec-файла; оценка абстракций сохраняет терминологию и реальные границы проекта. Обязательная делегация и согласование каждого шага не добавлены.
